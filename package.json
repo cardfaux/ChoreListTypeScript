@@ -1,0 +1,14 @@
+{
+  "name": "chorelist",
+  "version": "1.0.0",
+  "description": "Vanilla TypeScript Family ChoreList",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "James Hagood",
+  "license": "MIT",
+  "devDependencies": {
+    "lite-server": "^2.5.4"
+  }
+}
