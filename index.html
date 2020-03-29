@@ -4,29 +4,38 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-		<title>ProjectManager</title>
+		<title>FamilyChoreManager</title>
 		<link rel="stylesheet" href="app.css" />
 		<script src="dist/app.js" defer></script>
 	</head>
 
 	<body>
+		<!-- FORM FOR THE TEMPLATE START -->
 		<template id="project-input">
 			<form>
 				<div class="form-control">
-					<label for="title">Title</label>
-					<input type="text" id="title" />
+					<label for="children">Choose A Child:</label>
+					<select id="children">
+						<option value=""></option>
+						<option value="wesleigh">Wesleigh</option>
+						<option value="alexis">Alexis</option>
+						<option value="tommy">Tommy</option>
+					</select>
 				</div>
 				<div class="form-control">
-					<label for="description">Description</label>
-					<textarea id="description" rows="3"></textarea>
+					<label for="chore">Chore</label>
+					<input type="text" id="chore" />
 				</div>
 				<div class="form-control">
-					<label for="people">People</label>
-					<input type="number" id="people" step="1" min="0" max="10" />
+					<label for="notes">Notes</label>
+					<textarea id="notes" rows="3"></textarea>
 				</div>
-				<button type="submit">ADD PROJECT</button>
+				<button type="submit">ADD CHORE</button>
 			</form>
 		</template>
+		<!-- FORM FOR THE TEMPLATE END -->
+
+		<!-- LIST ITEM FOR CHORE ITEM TEMPLATE START -->
 		<template id="single-project">
 			<li draggable="true">
 				<h2></h2>
@@ -34,6 +43,9 @@
 				<p></p>
 			</li>
 		</template>
+		<!-- LIST ITEM FOR CHORE ITEM TEMPLATE END -->
+
+		<!-- UNORDERED LIST FOR CHORE ITEMS TEMPLATE START -->
 		<template id="project-list">
 			<section class="projects">
 				<header>
@@ -42,6 +54,10 @@
 				<ul></ul>
 			</section>
 		</template>
+		<!-- UNORDERED LIST FOR CHORE ITEMS TEMPLATE END -->
+
+		<!-- MAIN DIV TO INJECT THE OTHER TEMPLATES START -->
 		<div id="app"></div>
+		<!-- MAIN DIV TO INJECT THE OTHER TEMPLATES END -->
 	</body>
 </html>
