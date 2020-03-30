@@ -13,9 +13,17 @@ class Chore {
         this.status = status;
     }
 }
-class ProjectState {
+class State {
     constructor() {
         this.listeners = [];
+    }
+    addListener(listenerFn) {
+        this.listeners.push(listenerFn);
+    }
+}
+class ProjectState extends State {
+    constructor() {
+        super();
         this.chores = [];
     }
     static getInstance() {
@@ -24,9 +32,6 @@ class ProjectState {
         }
         this.instance = new ProjectState();
         return this.instance;
-    }
-    addListener(listenerFn) {
-        this.listeners.push(listenerFn);
     }
     addChore(_child, chore, note) {
         const newChore = new Chore(Math.random().toString(), chore, note, _child);
@@ -65,18 +70,52 @@ function autobind(_target, _methodName, descriptor) {
     };
     return adjDescriptor;
 }
-class ChoreList {
-    constructor(type) {
-        this.type = type;
-        this.templateElement = document.getElementById('project-list');
-        this.hostElement = document.getElementById('app');
-        this.assignedChores = [];
+class Component {
+    constructor(templateId, hostElementId, insertAtStart, newElementId) {
+        this.templateElement = document.getElementById(templateId);
+        this.hostElement = document.getElementById(hostElementId);
         const importedNode = document.importNode(this.templateElement.content, true);
         this.element = importedNode.firstElementChild;
-        this.element.id = `${this.type}-projects`;
+        if (newElementId) {
+            this.element.id = newElementId;
+        }
+        this.attach(insertAtStart);
+    }
+    attach(insertAtBeginning) {
+        this.hostElement.insertAdjacentElement(insertAtBeginning ? 'afterbegin' : 'beforeend', this.element);
+    }
+}
+class ChoreItem extends Component {
+    constructor(hostId, chore) {
+        super('single-project', hostId, false, chore.id);
+        this.chore = chore;
+        this.configure();
+        this.renderContent();
+    }
+    configure() { }
+    renderContent() {
+        this.element.querySelector('h2').textContent = this.chore.chore;
+        this.element.querySelector('p').textContent = this.chore.note;
+    }
+}
+class ChoreList extends Component {
+    constructor(type) {
+        super('project-list', 'app', false, `${type}-projects`);
+        this.type = type;
+        this.assignedChores = [];
+        this.configure();
+        this.renderContent();
+    }
+    configure() {
         projectState.addListener((chores) => {
             const relevantChores = chores.filter((chore) => {
-                if (this.type === 'Alexis' || 'Alexis') {
+                if (this.type === 'Alexis') {
+                    return chore.status === this.type;
+                }
+                if (this.type === 'Wesleigh') {
+                    return chore.status === this.type;
+                }
+                if (this.type === 'Tommy') {
                     return chore.status === this.type;
                 }
                 return;
@@ -84,17 +123,6 @@ class ChoreList {
             this.assignedChores = relevantChores;
             this.renderChores();
         });
-        this.attach();
-        this.renderContent();
-    }
-    renderChores() {
-        const listEl = document.getElementById(`${this.type}-projects-list`);
-        listEl.innerHTML = '';
-        for (const choreItem of this.assignedChores) {
-            const listItem = document.createElement('li');
-            listItem.textContent = choreItem.chore;
-            listEl.appendChild(listItem);
-        }
     }
     renderContent() {
         const listId = `${this.type}-projects-list`;
@@ -102,23 +130,26 @@ class ChoreList {
         this.element.querySelector('h2').textContent =
             this.type.toUpperCase() + "'S" + ' CHORES';
     }
-    attach() {
-        this.hostElement.insertAdjacentElement('beforeend', this.element);
+    renderChores() {
+        const listEl = document.getElementById(`${this.type}-projects-list`);
+        listEl.innerHTML = '';
+        for (const choreItem of this.assignedChores) {
+            new ChoreItem(this.element.querySelector('ul').id, choreItem);
+        }
     }
 }
-class ChoreInput {
+class ChoreInput extends Component {
     constructor() {
-        this.templateElement = document.getElementById('project-input');
-        this.hostElement = document.getElementById('app');
-        const importedNode = document.importNode(this.templateElement.content, true);
-        this.element = importedNode.firstElementChild;
-        this.element.id = 'user-input';
+        super('project-input', 'app', true, 'user-input');
         this.childInputElement = this.element.querySelector('#children');
         this.choreInputElement = this.element.querySelector('#chore');
         this.notesInputElement = this.element.querySelector('#notes');
         this.configure();
-        this.attach();
     }
+    configure() {
+        this.element.addEventListener('submit', this.submitHandler);
+    }
+    renderContent() { }
     gatherUserInput() {
         const enteredChild = this.childInputElement.value;
         const enteredChore = this.choreInputElement.value;
@@ -160,12 +191,6 @@ class ChoreInput {
             projectState.addChore(child, chore, note);
             this.clearInputs();
         }
-    }
-    configure() {
-        this.element.addEventListener('submit', this.submitHandler);
-    }
-    attach() {
-        this.hostElement.insertAdjacentElement('afterbegin', this.element);
     }
 }
 __decorate([

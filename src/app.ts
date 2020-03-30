@@ -9,14 +9,23 @@ class Chore {
 }
 
 // Project State Management
-type Listener = (items: Chore[]) => void;
+type Listener<T> = (items: T[]) => void;
 
-class ProjectState {
-	private listeners: Listener[] = [];
+class State<T> {
+	protected listeners: Listener<T>[] = [];
+
+	addListener(listenerFn: Listener<T>) {
+		this.listeners.push(listenerFn);
+	}
+}
+
+class ProjectState extends State<Chore> {
 	private chores: Chore[] = [];
 	private static instance: ProjectState;
 
-	private constructor() {}
+	private constructor() {
+		super();
+	}
 
 	static getInstance() {
 		if (this.instance) {
@@ -24,10 +33,6 @@ class ProjectState {
 		}
 		this.instance = new ProjectState();
 		return this.instance;
-	}
-
-	addListener(listenerFn: Listener) {
-		this.listeners.push(listenerFn);
 	}
 
 	addChore(_child: any, chore: string, note: string) {
@@ -89,30 +94,88 @@ function autobind(
 	return adjDescriptor;
 }
 
-// ChoreList Class
-class ChoreList {
+// Component BaseClass
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 	templateElement: HTMLTemplateElement;
-	hostElement: HTMLDivElement;
-	element: HTMLElement;
-	assignedChores: Chore[];
+	hostElement: T;
+	element: U;
 
-	constructor(private type: 'Wesleigh' | 'Alexis' | 'Tommy') {
+	constructor(
+		templateId: string,
+		hostElementId: string,
+		insertAtStart: boolean,
+		newElementId?: string
+	) {
 		this.templateElement = document.getElementById(
-			'project-list'
+			templateId
 		)! as HTMLTemplateElement;
-		this.hostElement = document.getElementById('app')! as HTMLDivElement;
-		this.assignedChores = [];
+		this.hostElement = document.getElementById(hostElementId)! as T;
 
 		const importedNode = document.importNode(
 			this.templateElement.content,
 			true
 		);
-		this.element = importedNode.firstElementChild as HTMLElement;
-		this.element.id = `${this.type}-projects`;
+		this.element = importedNode.firstElementChild as U;
+		if (newElementId) {
+			this.element.id = newElementId;
+		}
 
+		this.attach(insertAtStart);
+	}
+
+	private attach(insertAtBeginning: boolean) {
+		this.hostElement.insertAdjacentElement(
+			insertAtBeginning ? 'afterbegin' : 'beforeend',
+			this.element
+		);
+	}
+
+	abstract configure(): void;
+	abstract renderContent(): void;
+}
+
+// ChoreItem Class
+class ChoreItem extends Component<HTMLUListElement, HTMLLIElement> {
+	private chore: Chore;
+
+	constructor(hostId: string, chore: Chore) {
+		super('single-project', hostId, false, chore.id);
+		this.chore = chore;
+
+		this.configure();
+		this.renderContent();
+	}
+
+	configure() {}
+
+	renderContent() {
+		this.element.querySelector('h2')!.textContent = this.chore.chore;
+		this.element.querySelector('p')!.textContent = this.chore.note;
+	}
+}
+
+// ChoreList Class
+class ChoreList extends Component<HTMLDivElement, HTMLElement> {
+	assignedChores: Chore[];
+
+	constructor(private type: 'Wesleigh' | 'Alexis' | 'Tommy') {
+		super('project-list', 'app', false, `${type}-projects`);
+		this.assignedChores = [];
+
+		this.configure();
+		this.renderContent();
+	}
+
+	configure() {
 		projectState.addListener((chores: Chore[]) => {
 			const relevantChores = chores.filter((chore) => {
-				if (this.type === 'Alexis' || 'Alexis') {
+				if (this.type === 'Alexis') {
+					return chore.status === this.type;
+				}
+				if (this.type === 'Wesleigh') {
+					return chore.status === this.type;
+				}
+				if (this.type === 'Tommy') {
 					return chore.status === this.type;
 				}
 				return;
@@ -120,9 +183,13 @@ class ChoreList {
 			this.assignedChores = relevantChores;
 			this.renderChores();
 		});
+	}
 
-		this.attach();
-		this.renderContent();
+	renderContent() {
+		const listId = `${this.type}-projects-list`;
+		this.element.querySelector('ul')!.id = listId;
+		this.element.querySelector('h2')!.textContent =
+			this.type.toUpperCase() + "'S" + ' CHORES';
 	}
 
 	private renderChores() {
@@ -131,45 +198,19 @@ class ChoreList {
 		)! as HTMLUListElement;
 		listEl.innerHTML = '';
 		for (const choreItem of this.assignedChores) {
-			const listItem = document.createElement('li');
-			listItem.textContent = choreItem.chore;
-			listEl.appendChild(listItem);
+			new ChoreItem(this.element.querySelector('ul')!.id, choreItem);
 		}
-	}
-
-	private renderContent() {
-		const listId = `${this.type}-projects-list`;
-		this.element.querySelector('ul')!.id = listId;
-		this.element.querySelector('h2')!.textContent =
-			this.type.toUpperCase() + "'S" + ' CHORES';
-	}
-
-	private attach() {
-		this.hostElement.insertAdjacentElement('beforeend', this.element);
 	}
 }
 
 // ChoreInput Class
-class ChoreInput {
+class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 	// The Goal With This Class Is To Get Access To The Template With The Form And Render It In The Main Div
-	templateElement: HTMLTemplateElement;
-	hostElement: HTMLDivElement;
-	element: HTMLFormElement;
 	childInputElement: HTMLInputElement;
 	choreInputElement: HTMLInputElement;
 	notesInputElement: HTMLInputElement;
 	constructor() {
-		this.templateElement = document.getElementById(
-			'project-input'
-		)! as HTMLTemplateElement;
-		this.hostElement = document.getElementById('app')! as HTMLDivElement;
-
-		const importedNode = document.importNode(
-			this.templateElement.content,
-			true
-		);
-		this.element = importedNode.firstElementChild as HTMLFormElement;
-		this.element.id = 'user-input';
+		super('project-input', 'app', true, 'user-input');
 
 		this.childInputElement = this.element.querySelector(
 			'#children'
@@ -182,8 +223,13 @@ class ChoreInput {
 		) as HTMLInputElement;
 
 		this.configure();
-		this.attach();
 	}
+
+	configure() {
+		this.element.addEventListener('submit', this.submitHandler);
+	}
+
+	renderContent() {}
 
 	private gatherUserInput(): [string, string, string] | void {
 		const enteredChild = this.childInputElement.value;
@@ -232,14 +278,6 @@ class ChoreInput {
 			projectState.addChore(child, chore, note);
 			this.clearInputs();
 		}
-	}
-
-	private configure() {
-		this.element.addEventListener('submit', this.submitHandler);
-	}
-
-	private attach() {
-		this.hostElement.insertAdjacentElement('afterbegin', this.element);
 	}
 }
 
