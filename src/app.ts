@@ -1,3 +1,47 @@
+// Project Type
+class Chore {
+	constructor(
+		public id: string,
+		public chore: string,
+		public note: string,
+		public status?: 'Wesleigh' | 'Alexis' | 'Tommy'
+	) {}
+}
+
+// Project State Management
+type Listener = (items: Chore[]) => void;
+
+class ProjectState {
+	private listeners: Listener[] = [];
+	private chores: Chore[] = [];
+	private static instance: ProjectState;
+
+	private constructor() {}
+
+	static getInstance() {
+		if (this.instance) {
+			return this.instance;
+		}
+		this.instance = new ProjectState();
+		return this.instance;
+	}
+
+	addListener(listenerFn: Listener) {
+		this.listeners.push(listenerFn);
+	}
+
+	addChore(_child: any, chore: string, note: string) {
+		const newChore = new Chore(Math.random().toString(), chore, note, _child);
+
+		this.chores.push(newChore);
+		for (const listenerFn of this.listeners) {
+			listenerFn(this.chores.slice());
+		}
+	}
+}
+
+const projectState = ProjectState.getInstance();
+
 // Validation
 interface Validateable {
 	value: string;
@@ -45,6 +89,66 @@ function autobind(
 	return adjDescriptor;
 }
 
+// ChoreList Class
+class ChoreList {
+	templateElement: HTMLTemplateElement;
+	hostElement: HTMLDivElement;
+	element: HTMLElement;
+	assignedChores: Chore[];
+
+	constructor(private type: 'Wesleigh' | 'Alexis' | 'Tommy') {
+		this.templateElement = document.getElementById(
+			'project-list'
+		)! as HTMLTemplateElement;
+		this.hostElement = document.getElementById('app')! as HTMLDivElement;
+		this.assignedChores = [];
+
+		const importedNode = document.importNode(
+			this.templateElement.content,
+			true
+		);
+		this.element = importedNode.firstElementChild as HTMLElement;
+		this.element.id = `${this.type}-projects`;
+
+		projectState.addListener((chores: Chore[]) => {
+			const relevantChores = chores.filter((chore) => {
+				if (this.type === 'Alexis' || 'Alexis') {
+					return chore.status === this.type;
+				}
+				return;
+			});
+			this.assignedChores = relevantChores;
+			this.renderChores();
+		});
+
+		this.attach();
+		this.renderContent();
+	}
+
+	private renderChores() {
+		const listEl = document.getElementById(
+			`${this.type}-projects-list`
+		)! as HTMLUListElement;
+		listEl.innerHTML = '';
+		for (const choreItem of this.assignedChores) {
+			const listItem = document.createElement('li');
+			listItem.textContent = choreItem.chore;
+			listEl.appendChild(listItem);
+		}
+	}
+
+	private renderContent() {
+		const listId = `${this.type}-projects-list`;
+		this.element.querySelector('ul')!.id = listId;
+		this.element.querySelector('h2')!.textContent =
+			this.type.toUpperCase() + "'S" + ' CHORES';
+	}
+
+	private attach() {
+		this.hostElement.insertAdjacentElement('beforeend', this.element);
+	}
+}
+
 // ChoreInput Class
 class ChoreInput {
 	// The Goal With This Class Is To Get Access To The Template With The Form And Render It In The Main Div
@@ -86,10 +190,25 @@ class ChoreInput {
 		const enteredChore = this.choreInputElement.value;
 		const enteredNote = this.notesInputElement.value;
 
+		const childValidateable: Validateable = {
+			value: enteredChild,
+			required: true
+		};
+		const choreValidateable: Validateable = {
+			value: enteredChore,
+			required: true,
+			minLength: 5
+		};
+		const noteValidateable: Validateable = {
+			value: enteredNote,
+			required: true,
+			minLength: 5
+		};
+
 		if (
-			validate({ value: enteredChild, required: true }) &&
-			validate({ value: enteredChore, required: true, minLength: 5 }) &&
-			validate({ value: enteredNote, required: true, minLength: 5 })
+			!validate(childValidateable) ||
+			!validate(choreValidateable) ||
+			!validate(noteValidateable)
 		) {
 			alert('Invalid Input, Please Try Again!');
 			return;
@@ -110,7 +229,7 @@ class ChoreInput {
 		const userInput = this.gatherUserInput();
 		if (Array.isArray(userInput)) {
 			const [child, chore, note] = userInput;
-			console.log(child, chore, note);
+			projectState.addChore(child, chore, note);
 			this.clearInputs();
 		}
 	}
@@ -125,3 +244,6 @@ class ChoreInput {
 }
 
 const projectInput = new ChoreInput();
+const wesleighChoreList = new ChoreList('Wesleigh');
+const alexisChoreList = new ChoreList('Alexis');
+const tommyChoreList = new ChoreList('Tommy');
