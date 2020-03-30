@@ -1,27 +1,45 @@
-// Project Type
+// ---- INTERFACES FOR THE DROG AND DROP START--------
+
+interface DraggableChores {
+	dragStart(event: DragEvent): void;
+	dragEnd(event: DragEvent): void;
+}
+
+interface DropChores {
+	dragOver(event: DragEvent): void;
+	dropChore(event: DragEvent): void;
+	dragLeave(event: DragEvent): void;
+}
+
+// ---- INTERFACES FOR THE DROG AND DROP END--------
+
+// ---- BASE CLASS FOR A CHORE START --------
 class Chore {
 	constructor(
 		public id: string,
 		public chore: string,
 		public note: string,
-		public status?: 'Wesleigh' | 'Alexis' | 'Tommy'
+		public status: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
 	) {}
 }
 
-// Project State Management
-type Listener<T> = (items: T[]) => void;
+// ---- BASE CLASS FOR A CHORE END --------
+
+// ------ THE STATE FOR THE CHORES START ----------
+
+type ListenerFunction<T> = (items: T[]) => void;
 
 class State<T> {
-	protected listeners: Listener<T>[] = [];
+	protected listeners: ListenerFunction<T>[] = [];
 
-	addListener(listenerFn: Listener<T>) {
+	public addListener(listenerFn: ListenerFunction<T>) {
 		this.listeners.push(listenerFn);
 	}
 }
 
-class ProjectState extends State<Chore> {
+class ChoreState extends State<Chore> {
 	private chores: Chore[] = [];
-	private static instance: ProjectState;
+	private static instance: ChoreState;
 
 	private constructor() {
 		super();
@@ -31,70 +49,70 @@ class ProjectState extends State<Chore> {
 		if (this.instance) {
 			return this.instance;
 		}
-		this.instance = new ProjectState();
+		this.instance = new ChoreState();
 		return this.instance;
 	}
 
-	addChore(_child: any, chore: string, note: string) {
-		const newChore = new Chore(Math.random().toString(), chore, note, _child);
+	public addChore(child: any, chore: string, note: string) {
+		const newChore = new Chore(Math.random().toString(), chore, note, child);
 
 		this.chores.push(newChore);
+		this.updateListeners();
+	}
+
+	public moveChore(
+		choreId: string,
+		newStatus: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
+	) {
+		const chore = this.chores.find((chore) => chore.id === choreId);
+		if (chore && chore.status !== newStatus) {
+			chore.status = newStatus;
+			this.updateListeners();
+		}
+	}
+
+	private updateListeners() {
 		for (const listenerFn of this.listeners) {
 			listenerFn(this.chores.slice());
 		}
 	}
 }
 
-const projectState = ProjectState.getInstance();
+const choreState = ChoreState.getInstance();
 
-// Validation
-interface Validateable {
+// ------ THE STATE FOR THE CHORES END ----------
+
+// ---------VALIDATION FOR THE INPUTS START -------------
+interface ValidationLogic {
 	value: string;
 	required?: boolean;
 	minLength?: number;
 	maxLength?: number;
 }
 
-function validate(validatableInput: Validateable) {
+function validateInputs(validateInput: ValidationLogic) {
 	let isValid = true;
-	if (validatableInput.required) {
-		isValid = isValid && validatableInput.value.trim().length !== 0;
+	if (validateInput.required) {
+		isValid = isValid && validateInput.value.trim().length !== 0;
 	}
 	if (
-		validatableInput.minLength != null &&
-		typeof validatableInput.value === 'string'
+		validateInput.minLength != null &&
+		typeof validateInput.value === 'string'
 	) {
-		isValid =
-			isValid && validatableInput.value.length >= validatableInput.minLength;
+		isValid = isValid && validateInput.value.length >= validateInput.minLength;
 	}
 	if (
-		validatableInput.maxLength != null &&
-		typeof validatableInput.value === 'string'
+		validateInput.maxLength != null &&
+		typeof validateInput.value === 'string'
 	) {
-		isValid =
-			isValid && validatableInput.value.length <= validatableInput.maxLength;
+		isValid = isValid && validateInput.value.length <= validateInput.maxLength;
 	}
 	return isValid;
 }
 
-// AutoBind Decorator
-function autobind(
-	_target: any,
-	_methodName: string,
-	descriptor: PropertyDescriptor
-) {
-	const originalMethod = descriptor.value;
-	const adjDescriptor: PropertyDescriptor = {
-		configurable: true,
-		get() {
-			const boundFn = originalMethod.bind(this);
-			return boundFn;
-		}
-	};
-	return adjDescriptor;
-}
+// ---------VALIDATION FOR THE INPUTS END -------------
 
-// Component BaseClass
+// ------- COMPONENT BASECLASS START --------------
 abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 	templateElement: HTMLTemplateElement;
 	hostElement: T;
@@ -130,45 +148,85 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 		);
 	}
 
-	abstract configure(): void;
+	abstract addListeners(): void;
 	abstract renderContent(): void;
 }
 
-// ChoreItem Class
-class ChoreItem extends Component<HTMLUListElement, HTMLLIElement> {
+// ------- COMPONENT BASECLASS END --------------
+
+// -------------- CHOREITEM CLASS EXTENDING FROM THE COMPONENT CLASS START ---------
+class ChoreItem extends Component<HTMLUListElement, HTMLLIElement>
+	implements DraggableChores {
 	private chore: Chore;
 
 	constructor(hostId: string, chore: Chore) {
-		super('single-project', hostId, false, chore.id);
+		super('single-chore', hostId, false, chore.id);
 		this.chore = chore;
 
-		this.configure();
+		this.addListeners();
 		this.renderContent();
 	}
 
-	configure() {}
+	public dragStart(event: DragEvent) {
+		event.dataTransfer!.setData('text/plain', this.chore.id);
+		event.dataTransfer!.effectAllowed = 'move';
+	}
 
-	renderContent() {
+	public dragEnd(_event: DragEvent) {
+		console.log('DragEnd');
+	}
+
+	public addListeners() {
+		this.element.addEventListener('dragstart', this.dragStart.bind(this));
+		this.element.addEventListener('dragend', this.dragEnd.bind(this));
+	}
+
+	public renderContent() {
 		this.element.querySelector('h2')!.textContent = this.chore.chore;
 		this.element.querySelector('p')!.textContent = this.chore.note;
 	}
 }
 
-// ChoreList Class
-class ChoreList extends Component<HTMLDivElement, HTMLElement> {
+// -------------- CHOREITEM CLASS EXTENDING FROM THE COMPONENT CLASS END ---------
+
+// -------------- CHORELIST CLASS EXTENDING FROM THE COMPONENT CLASS START -----------
+class ChoreList extends Component<HTMLDivElement, HTMLElement>
+	implements DropChores {
 	assignedChores: Chore[];
 
-	constructor(private type: 'Wesleigh' | 'Alexis' | 'Tommy') {
-		super('project-list', 'app', false, `${type}-projects`);
+	constructor(private type: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished') {
+		super('chore-list', 'app', false, `${type}-Chores`);
 		this.assignedChores = [];
 
-		this.configure();
+		this.addListeners();
 		this.renderContent();
 	}
 
-	configure() {
-		projectState.addListener((chores: Chore[]) => {
-			const relevantChores = chores.filter((chore) => {
+	public dragOver(event: DragEvent) {
+		if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+			event.preventDefault();
+			const listEl = this.element.querySelector('ul')!;
+			listEl.classList.add('droppable');
+		}
+	}
+
+	public dropChore(event: DragEvent) {
+		const choreId = event.dataTransfer!.getData('text/plain');
+		choreState.moveChore(choreId, 'Finished');
+	}
+
+	public dragLeave(_event: DragEvent) {
+		const listEl = this.element.querySelector('ul')!;
+		listEl.classList.remove('droppable');
+	}
+
+	public addListeners() {
+		this.element.addEventListener('dragover', this.dragOver.bind(this));
+		this.element.addEventListener('dragleave', this.dragLeave.bind(this));
+		this.element.addEventListener('drop', this.dropChore.bind(this));
+
+		choreState.addListener((chores: Chore[]) => {
+			const appliedChores = chores.filter((chore) => {
 				if (this.type === 'Alexis') {
 					return chore.status === this.type;
 				}
@@ -178,23 +236,30 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement> {
 				if (this.type === 'Tommy') {
 					return chore.status === this.type;
 				}
+				if (this.type === 'Finished') {
+					return chore.status === this.type;
+				}
 				return;
 			});
-			this.assignedChores = relevantChores;
+			this.assignedChores = appliedChores;
 			this.renderChores();
 		});
 	}
 
-	renderContent() {
-		const listId = `${this.type}-projects-list`;
+	public renderContent() {
+		const listId = `${this.type}-chores-list`;
 		this.element.querySelector('ul')!.id = listId;
 		this.element.querySelector('h2')!.textContent =
 			this.type.toUpperCase() + "'S" + ' CHORES';
+		if (this.type === 'Finished') {
+			this.element.querySelector('h2')!.textContent =
+				this.type.toUpperCase() + ' CHORES';
+		}
 	}
 
 	private renderChores() {
 		const listEl = document.getElementById(
-			`${this.type}-projects-list`
+			`${this.type}-chores-list`
 		)! as HTMLUListElement;
 		listEl.innerHTML = '';
 		for (const choreItem of this.assignedChores) {
@@ -203,14 +268,15 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement> {
 	}
 }
 
-// ChoreInput Class
+// -------------- CHORELIST CLASS EXTENDING FROM THE COMPONENT CLASS END -----------
+
+// ---------- CHOREINPUT CLASS EXTENDING FROM THE COMPONENT CLASS START --------
 class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
-	// The Goal With This Class Is To Get Access To The Template With The Form And Render It In The Main Div
 	childInputElement: HTMLInputElement;
 	choreInputElement: HTMLInputElement;
 	notesInputElement: HTMLInputElement;
 	constructor() {
-		super('project-input', 'app', true, 'user-input');
+		super('chore-input', 'app', true, 'user-input');
 
 		this.childInputElement = this.element.querySelector(
 			'#children'
@@ -222,46 +288,46 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 			'#notes'
 		) as HTMLInputElement;
 
-		this.configure();
+		this.addListeners();
 	}
 
-	configure() {
-		this.element.addEventListener('submit', this.submitHandler);
+	public addListeners() {
+		this.element.addEventListener('submit', this.submitHandler.bind(this));
 	}
 
-	renderContent() {}
-
-	private gatherUserInput(): [string, string, string] | void {
+	private userInputs(): [string, string, string] | void {
 		const enteredChild = this.childInputElement.value;
 		const enteredChore = this.choreInputElement.value;
 		const enteredNote = this.notesInputElement.value;
 
-		const childValidateable: Validateable = {
+		const childValidation: ValidationLogic = {
 			value: enteredChild,
 			required: true
 		};
-		const choreValidateable: Validateable = {
+		const choreValidation: ValidationLogic = {
 			value: enteredChore,
 			required: true,
 			minLength: 5
 		};
-		const noteValidateable: Validateable = {
+		const noteValidation: ValidationLogic = {
 			value: enteredNote,
 			required: true,
 			minLength: 5
 		};
 
 		if (
-			!validate(childValidateable) ||
-			!validate(choreValidateable) ||
-			!validate(noteValidateable)
+			!validateInputs(childValidation) ||
+			!validateInputs(choreValidation) ||
+			!validateInputs(noteValidation)
 		) {
-			alert('Invalid Input, Please Try Again!');
+			alert('INVALID INPUTS!!');
 			return;
 		} else {
 			return [enteredChild, enteredChore, enteredNote];
 		}
 	}
+
+	public renderContent() {}
 
 	private clearInputs() {
 		this.childInputElement.value = '';
@@ -269,19 +335,21 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 		this.notesInputElement.value = '';
 	}
 
-	@autobind
 	private submitHandler(event: Event) {
 		event.preventDefault();
-		const userInput = this.gatherUserInput();
+		const userInput = this.userInputs();
 		if (Array.isArray(userInput)) {
 			const [child, chore, note] = userInput;
-			projectState.addChore(child, chore, note);
+			choreState.addChore(child, chore, note);
 			this.clearInputs();
 		}
 	}
 }
 
-const projectInput = new ChoreInput();
+// ---------- CHOREINPUT CLASS EXTENDING FROM THE COMPONENT CLASS END --------
+
+const choreInput = new ChoreInput();
 const wesleighChoreList = new ChoreList('Wesleigh');
 const alexisChoreList = new ChoreList('Alexis');
 const tommyChoreList = new ChoreList('Tommy');
+const finishedChores = new ChoreList('Finished');

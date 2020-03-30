@@ -11,43 +11,44 @@
 
 	<body>
 		<!-- FORM FOR THE TEMPLATE START -->
-		<template id="project-input">
-			<form>
-				<div class="form-control">
-					<label for="children">Choose A Child:</label>
-					<select id="children">
-						<option value=""></option>
-						<option value="Wesleigh">Wesleigh</option>
-						<option value="Alexis">Alexis</option>
-						<option value="Tommy">Tommy</option>
-					</select>
-				</div>
-				<div class="form-control">
-					<label for="chore">Chore</label>
-					<input type="text" id="chore" />
-				</div>
-				<div class="form-control">
-					<label for="notes">Notes</label>
-					<textarea id="notes" rows="3"></textarea>
-				</div>
-				<button type="submit">ADD CHORE</button>
-			</form>
+		<template id="chore-input">
+			<div class="form-container">
+				<form>
+					<div class="form-control">
+						<label for="children">Choose A Child:</label>
+						<select id="children">
+							<option value=""></option>
+							<option value="Wesleigh">Wesleigh</option>
+							<option value="Alexis">Alexis</option>
+							<option value="Tommy">Tommy</option>
+						</select>
+					</div>
+					<div class="form-control">
+						<label for="chore">Chore</label>
+						<input type="text" id="chore" />
+					</div>
+					<div class="form-control">
+						<label for="notes">Notes</label>
+						<textarea id="notes" rows="3"></textarea>
+					</div>
+					<button type="submit">ADD CHORE</button>
+				</form>
+			</div>
 		</template>
 		<!-- FORM FOR THE TEMPLATE END -->
 
 		<!-- LIST ITEM FOR CHORE ITEM TEMPLATE START -->
-		<template id="single-project">
+		<template id="single-chore">
 			<li draggable="true">
 				<h2></h2>
-				<h3></h3>
 				<p></p>
 			</li>
 		</template>
 		<!-- LIST ITEM FOR CHORE ITEM TEMPLATE END -->
 
 		<!-- UNORDERED LIST FOR CHORE ITEMS TEMPLATE START -->
-		<template id="project-list">
-			<section class="projects">
+		<template id="chore-list">
+			<section class="chores">
 				<header>
 					<h2></h2>
 				</header>

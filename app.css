@@ -26,7 +26,6 @@ textarea {
   font: inherit;
   padding: 0.2rem 0.4rem;
   width: 100%;
-  max-width: 30rem;
   border: 1px solid #ccc;
 }
 
@@ -38,8 +37,8 @@ textarea:focus {
 
 button {
   font: inherit;
-  background: #ff0062;
-  border: 1px solid #ff0062;
+  background: #476c9b;
+  border: 1px solid #476c9b;
   cursor: pointer;
   color: white;
   padding: 0.75rem 1rem;
@@ -51,78 +50,81 @@ button:focus {
 
 button:hover,
 button:active {
-  background: #a80041;
-  border-color: #a80041;
+  background: #1481ba;
+  border-color: #1481ba;
 }
 
-.projects {
-  margin: 1rem;
-  border: 1px solid #ff0062;
+.chores {
+  width: 50%;
+  margin: 1rem auto;
+  border: 1px solid #476c9b;
 }
 
-.projects header {
-  background: #ff0062;
+.chores header {
+  background: #476c9b;
   height: 3.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-#finished-projects {
-  border-color: #0044ff;
+#Finished-Chores {
+  border-color: #ef476f;
 }
 
-#finished-projects header {
-  background: #0044ff;
+#Finished-Chores header {
+  background: #ef476f;
 }
 
-.projects h2 {
+#Finished-Chores li h2 {
+  color: #ef476f;
+}
+
+#Finished-Chores .droppable {
+  background: #ef476f;
+  min-height: 10rem;
+}
+
+#user-input {
+  margin: auto;
+  padding: 1rem;
+  border: 1px solid #2d232e;
+  background: #f7f7f7;
+}
+
+.chores h2 {
   margin: 0;
   color: white;
 }
 
-.projects ul {
+.chores ul {
   list-style: none;
   margin: 0;
   padding: 1rem;
 }
 
-.projects li {
-  box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.26);
+.chores li {
+  display: flex;
+  justify-content: space-around;
+  box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.38);
   padding: 1rem;
   margin: 1rem;
   background: white;
 }
 
-.projects li h2 {
-  color: #ff0062;
+.chores li h2 {
+  color: #476c9b;
   margin: 0.5rem 0;
 }
 
-#finished-projects li h2 {
-  color: #0044ff;
-}
-
-.projects li h3 {
-  color: #575757;
-  font-size: 1rem;
-}
-
-.project li p {
-  margin: 0;
+.chores li p {
+  border-bottom: 1px solid #ef476f;
 }
 
 .droppable {
   background: #ffe3ee;
 }
 
-#finished-projects .droppable {
-  background: #d6e1ff;
-}
-
-#user-input {
-  margin: 1rem;
-  padding: 1rem;
-  border: 1px solid #ff0062;
-  background: #f7f7f7;
+.form-container {
+  width: 25%;
 }

@@ -1,10 +1,4 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 class Chore {
     constructor(id, chore, note, status) {
         this.id = id;
@@ -21,7 +15,7 @@ class State {
         this.listeners.push(listenerFn);
     }
 }
-class ProjectState extends State {
+class ChoreState extends State {
     constructor() {
         super();
         this.chores = [];
@@ -30,45 +24,42 @@ class ProjectState extends State {
         if (this.instance) {
             return this.instance;
         }
-        this.instance = new ProjectState();
+        this.instance = new ChoreState();
         return this.instance;
     }
-    addChore(_child, chore, note) {
-        const newChore = new Chore(Math.random().toString(), chore, note, _child);
+    addChore(child, chore, note) {
+        const newChore = new Chore(Math.random().toString(), chore, note, child);
         this.chores.push(newChore);
+        this.updateListeners();
+    }
+    moveChore(choreId, newStatus) {
+        const chore = this.chores.find((chore) => chore.id === choreId);
+        if (chore && chore.status !== newStatus) {
+            chore.status = newStatus;
+            this.updateListeners();
+        }
+    }
+    updateListeners() {
         for (const listenerFn of this.listeners) {
             listenerFn(this.chores.slice());
         }
     }
 }
-const projectState = ProjectState.getInstance();
-function validate(validatableInput) {
+const choreState = ChoreState.getInstance();
+function validateInputs(validateInput) {
     let isValid = true;
-    if (validatableInput.required) {
-        isValid = isValid && validatableInput.value.trim().length !== 0;
+    if (validateInput.required) {
+        isValid = isValid && validateInput.value.trim().length !== 0;
     }
-    if (validatableInput.minLength != null &&
-        typeof validatableInput.value === 'string') {
-        isValid =
-            isValid && validatableInput.value.length >= validatableInput.minLength;
+    if (validateInput.minLength != null &&
+        typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length >= validateInput.minLength;
     }
-    if (validatableInput.maxLength != null &&
-        typeof validatableInput.value === 'string') {
-        isValid =
-            isValid && validatableInput.value.length <= validatableInput.maxLength;
+    if (validateInput.maxLength != null &&
+        typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length <= validateInput.maxLength;
     }
     return isValid;
-}
-function autobind(_target, _methodName, descriptor) {
-    const originalMethod = descriptor.value;
-    const adjDescriptor = {
-        configurable: true,
-        get() {
-            const boundFn = originalMethod.bind(this);
-            return boundFn;
-        }
-    };
-    return adjDescriptor;
 }
 class Component {
     constructor(templateId, hostElementId, insertAtStart, newElementId) {
@@ -87,12 +78,22 @@ class Component {
 }
 class ChoreItem extends Component {
     constructor(hostId, chore) {
-        super('single-project', hostId, false, chore.id);
+        super('single-chore', hostId, false, chore.id);
         this.chore = chore;
-        this.configure();
+        this.addListeners();
         this.renderContent();
     }
-    configure() { }
+    dragStart(event) {
+        event.dataTransfer.setData('text/plain', this.chore.id);
+        event.dataTransfer.effectAllowed = 'move';
+    }
+    dragEnd(_event) {
+        console.log('DragEnd');
+    }
+    addListeners() {
+        this.element.addEventListener('dragstart', this.dragStart.bind(this));
+        this.element.addEventListener('dragend', this.dragEnd.bind(this));
+    }
     renderContent() {
         this.element.querySelector('h2').textContent = this.chore.chore;
         this.element.querySelector('p').textContent = this.chore.note;
@@ -100,15 +101,33 @@ class ChoreItem extends Component {
 }
 class ChoreList extends Component {
     constructor(type) {
-        super('project-list', 'app', false, `${type}-projects`);
+        super('chore-list', 'app', false, `${type}-Chores`);
         this.type = type;
         this.assignedChores = [];
-        this.configure();
+        this.addListeners();
         this.renderContent();
     }
-    configure() {
-        projectState.addListener((chores) => {
-            const relevantChores = chores.filter((chore) => {
+    dragOver(event) {
+        if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+            event.preventDefault();
+            const listEl = this.element.querySelector('ul');
+            listEl.classList.add('droppable');
+        }
+    }
+    dropChore(event) {
+        const choreId = event.dataTransfer.getData('text/plain');
+        choreState.moveChore(choreId, 'Finished');
+    }
+    dragLeave(_event) {
+        const listEl = this.element.querySelector('ul');
+        listEl.classList.remove('droppable');
+    }
+    addListeners() {
+        this.element.addEventListener('dragover', this.dragOver.bind(this));
+        this.element.addEventListener('dragleave', this.dragLeave.bind(this));
+        this.element.addEventListener('drop', this.dropChore.bind(this));
+        choreState.addListener((chores) => {
+            const appliedChores = chores.filter((chore) => {
                 if (this.type === 'Alexis') {
                     return chore.status === this.type;
                 }
@@ -118,20 +137,27 @@ class ChoreList extends Component {
                 if (this.type === 'Tommy') {
                     return chore.status === this.type;
                 }
+                if (this.type === 'Finished') {
+                    return chore.status === this.type;
+                }
                 return;
             });
-            this.assignedChores = relevantChores;
+            this.assignedChores = appliedChores;
             this.renderChores();
         });
     }
     renderContent() {
-        const listId = `${this.type}-projects-list`;
+        const listId = `${this.type}-chores-list`;
         this.element.querySelector('ul').id = listId;
         this.element.querySelector('h2').textContent =
             this.type.toUpperCase() + "'S" + ' CHORES';
+        if (this.type === 'Finished') {
+            this.element.querySelector('h2').textContent =
+                this.type.toUpperCase() + ' CHORES';
+        }
     }
     renderChores() {
-        const listEl = document.getElementById(`${this.type}-projects-list`);
+        const listEl = document.getElementById(`${this.type}-chores-list`);
         listEl.innerHTML = '';
         for (const choreItem of this.assignedChores) {
             new ChoreItem(this.element.querySelector('ul').id, choreItem);
@@ -140,44 +166,44 @@ class ChoreList extends Component {
 }
 class ChoreInput extends Component {
     constructor() {
-        super('project-input', 'app', true, 'user-input');
+        super('chore-input', 'app', true, 'user-input');
         this.childInputElement = this.element.querySelector('#children');
         this.choreInputElement = this.element.querySelector('#chore');
         this.notesInputElement = this.element.querySelector('#notes');
-        this.configure();
+        this.addListeners();
     }
-    configure() {
-        this.element.addEventListener('submit', this.submitHandler);
+    addListeners() {
+        this.element.addEventListener('submit', this.submitHandler.bind(this));
     }
-    renderContent() { }
-    gatherUserInput() {
+    userInputs() {
         const enteredChild = this.childInputElement.value;
         const enteredChore = this.choreInputElement.value;
         const enteredNote = this.notesInputElement.value;
-        const childValidateable = {
+        const childValidation = {
             value: enteredChild,
             required: true
         };
-        const choreValidateable = {
+        const choreValidation = {
             value: enteredChore,
             required: true,
             minLength: 5
         };
-        const noteValidateable = {
+        const noteValidation = {
             value: enteredNote,
             required: true,
             minLength: 5
         };
-        if (!validate(childValidateable) ||
-            !validate(choreValidateable) ||
-            !validate(noteValidateable)) {
-            alert('Invalid Input, Please Try Again!');
+        if (!validateInputs(childValidation) ||
+            !validateInputs(choreValidation) ||
+            !validateInputs(noteValidation)) {
+            alert('INVALID INPUTS!!');
             return;
         }
         else {
             return [enteredChild, enteredChore, enteredNote];
         }
     }
+    renderContent() { }
     clearInputs() {
         this.childInputElement.value = '';
         this.choreInputElement.value = '';
@@ -185,19 +211,17 @@ class ChoreInput extends Component {
     }
     submitHandler(event) {
         event.preventDefault();
-        const userInput = this.gatherUserInput();
+        const userInput = this.userInputs();
         if (Array.isArray(userInput)) {
             const [child, chore, note] = userInput;
-            projectState.addChore(child, chore, note);
+            choreState.addChore(child, chore, note);
             this.clearInputs();
         }
     }
 }
-__decorate([
-    autobind
-], ChoreInput.prototype, "submitHandler", null);
-const projectInput = new ChoreInput();
+const choreInput = new ChoreInput();
 const wesleighChoreList = new ChoreList('Wesleigh');
 const alexisChoreList = new ChoreList('Alexis');
 const tommyChoreList = new ChoreList('Tommy');
+const finishedChores = new ChoreList('Finished');
 //# sourceMappingURL=app.js.map
