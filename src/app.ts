@@ -19,7 +19,7 @@ class Chore {
 		public id: string,
 		public chore: string,
 		public note: string,
-		public status: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
+		public whichBox: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
 	) {}
 }
 
@@ -62,11 +62,11 @@ class ChoreState extends State<Chore> {
 
 	public moveChore(
 		choreId: string,
-		newStatus: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
+		newBox: 'Wesleigh' | 'Alexis' | 'Tommy' | 'Finished'
 	) {
 		const chore = this.chores.find((chore) => chore.id === choreId);
-		if (chore && chore.status !== newStatus) {
-			chore.status = newStatus;
+		if (chore && chore.whichBox !== newBox) {
+			chore.whichBox = newBox;
 			this.updateListeners();
 		}
 	}
@@ -228,16 +228,16 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement>
 		choreState.addListener((chores: Chore[]) => {
 			const appliedChores = chores.filter((chore) => {
 				if (this.type === 'Alexis') {
-					return chore.status === this.type;
+					return chore.whichBox === this.type;
 				}
 				if (this.type === 'Wesleigh') {
-					return chore.status === this.type;
+					return chore.whichBox === this.type;
 				}
 				if (this.type === 'Tommy') {
-					return chore.status === this.type;
+					return chore.whichBox === this.type;
 				}
 				if (this.type === 'Finished') {
-					return chore.status === this.type;
+					return chore.whichBox === this.type;
 				}
 				return;
 			});
@@ -348,8 +348,12 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 
 // ---------- CHOREINPUT CLASS EXTENDING FROM THE COMPONENT CLASS END --------
 
+// ------- RENDERING THE COMPONENTS START -------------
+
 const choreInput = new ChoreInput();
 const wesleighChoreList = new ChoreList('Wesleigh');
 const alexisChoreList = new ChoreList('Alexis');
 const tommyChoreList = new ChoreList('Tommy');
 const finishedChores = new ChoreList('Finished');
+
+// ------- RENDERING THE COMPONENTS END -------------

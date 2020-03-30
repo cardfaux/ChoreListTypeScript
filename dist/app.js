@@ -1,10 +1,10 @@
 "use strict";
 class Chore {
-    constructor(id, chore, note, status) {
+    constructor(id, chore, note, whichBox) {
         this.id = id;
         this.chore = chore;
         this.note = note;
-        this.status = status;
+        this.whichBox = whichBox;
     }
 }
 class State {
@@ -32,10 +32,10 @@ class ChoreState extends State {
         this.chores.push(newChore);
         this.updateListeners();
     }
-    moveChore(choreId, newStatus) {
+    moveChore(choreId, newBox) {
         const chore = this.chores.find((chore) => chore.id === choreId);
-        if (chore && chore.status !== newStatus) {
-            chore.status = newStatus;
+        if (chore && chore.whichBox !== newBox) {
+            chore.whichBox = newBox;
             this.updateListeners();
         }
     }
@@ -129,16 +129,16 @@ class ChoreList extends Component {
         choreState.addListener((chores) => {
             const appliedChores = chores.filter((chore) => {
                 if (this.type === 'Alexis') {
-                    return chore.status === this.type;
+                    return chore.whichBox === this.type;
                 }
                 if (this.type === 'Wesleigh') {
-                    return chore.status === this.type;
+                    return chore.whichBox === this.type;
                 }
                 if (this.type === 'Tommy') {
-                    return chore.status === this.type;
+                    return chore.whichBox === this.type;
                 }
                 if (this.type === 'Finished') {
-                    return chore.status === this.type;
+                    return chore.whichBox === this.type;
                 }
                 return;
             });
