@@ -1,3 +1,33 @@
+// ---------VALIDATION FOR THE INPUTS START -------------
+interface ValidationLogic {
+	value: string;
+	required?: boolean;
+	minLength?: number;
+	maxLength?: number;
+}
+
+function validateInputs(validateInput: ValidationLogic) {
+	let isValid = true;
+	if (validateInput.required) {
+		isValid = isValid && validateInput.value.trim().length !== 0;
+	}
+	if (
+		validateInput.minLength != null &&
+		typeof validateInput.value === 'string'
+	) {
+		isValid = isValid && validateInput.value.length >= validateInput.minLength;
+	}
+	if (
+		validateInput.maxLength != null &&
+		typeof validateInput.value === 'string'
+	) {
+		isValid = isValid && validateInput.value.length <= validateInput.maxLength;
+	}
+	return isValid;
+}
+
+// ---------VALIDATION FOR THE INPUTS END -------------
+
 // ---- INTERFACES FOR THE DROG AND DROP START--------
 
 interface DraggableChores {
@@ -25,7 +55,7 @@ class Chore {
 
 // ---- BASE CLASS FOR A CHORE END --------
 
-// ------ THE STATE FOR THE CHORES START ----------
+// ------ THE BASE CLASS FOR THE CHORES START ----------
 
 type ListenerFunction<T> = (items: T[]) => void;
 
@@ -36,6 +66,10 @@ class State<T> {
 		this.listeners.push(listenerFn);
 	}
 }
+
+// ------ THE BASE CLASS FOR THE CHORES END ----------
+
+// --------- THE CHORESTATE CLASS EXTENDING STATE CLASS START -------
 
 class ChoreState extends State<Chore> {
 	private chores: Chore[] = [];
@@ -80,37 +114,7 @@ class ChoreState extends State<Chore> {
 
 const choreState = ChoreState.getInstance();
 
-// ------ THE STATE FOR THE CHORES END ----------
-
-// ---------VALIDATION FOR THE INPUTS START -------------
-interface ValidationLogic {
-	value: string;
-	required?: boolean;
-	minLength?: number;
-	maxLength?: number;
-}
-
-function validateInputs(validateInput: ValidationLogic) {
-	let isValid = true;
-	if (validateInput.required) {
-		isValid = isValid && validateInput.value.trim().length !== 0;
-	}
-	if (
-		validateInput.minLength != null &&
-		typeof validateInput.value === 'string'
-	) {
-		isValid = isValid && validateInput.value.length >= validateInput.minLength;
-	}
-	if (
-		validateInput.maxLength != null &&
-		typeof validateInput.value === 'string'
-	) {
-		isValid = isValid && validateInput.value.length <= validateInput.maxLength;
-	}
-	return isValid;
-}
-
-// ---------VALIDATION FOR THE INPUTS END -------------
+// --------- THE CHORESTATE CLASS EXTENDING STATE CLASS END -------
 
 // ------- COMPONENT BASECLASS START --------------
 abstract class Component<T extends HTMLElement, U extends HTMLElement> {

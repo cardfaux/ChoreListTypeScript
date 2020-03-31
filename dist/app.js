@@ -1,4 +1,19 @@
 "use strict";
+function validateInputs(validateInput) {
+    let isValid = true;
+    if (validateInput.required) {
+        isValid = isValid && validateInput.value.trim().length !== 0;
+    }
+    if (validateInput.minLength != null &&
+        typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length >= validateInput.minLength;
+    }
+    if (validateInput.maxLength != null &&
+        typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length <= validateInput.maxLength;
+    }
+    return isValid;
+}
 class Chore {
     constructor(id, chore, note, whichBox) {
         this.id = id;
@@ -46,21 +61,6 @@ class ChoreState extends State {
     }
 }
 const choreState = ChoreState.getInstance();
-function validateInputs(validateInput) {
-    let isValid = true;
-    if (validateInput.required) {
-        isValid = isValid && validateInput.value.trim().length !== 0;
-    }
-    if (validateInput.minLength != null &&
-        typeof validateInput.value === 'string') {
-        isValid = isValid && validateInput.value.length >= validateInput.minLength;
-    }
-    if (validateInput.maxLength != null &&
-        typeof validateInput.value === 'string') {
-        isValid = isValid && validateInput.value.length <= validateInput.maxLength;
-    }
-    return isValid;
-}
 class Component {
     constructor(templateId, hostElementId, insertAtStart, newElementId) {
         this.templateElement = document.getElementById(templateId);
