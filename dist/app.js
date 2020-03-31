@@ -64,16 +64,16 @@ function validateInputs(validateInput) {
 class Component {
     constructor(templateId, hostElementId, insertAtStart, newElementId) {
         this.templateElement = document.getElementById(templateId);
-        this.hostElement = document.getElementById(hostElementId);
+        this.renderElement = document.getElementById(hostElementId);
         const importedNode = document.importNode(this.templateElement.content, true);
         this.element = importedNode.firstElementChild;
         if (newElementId) {
             this.element.id = newElementId;
         }
-        this.attach(insertAtStart);
+        this.insert(insertAtStart);
     }
-    attach(insertAtBeginning) {
-        this.hostElement.insertAdjacentElement(insertAtBeginning ? 'afterbegin' : 'beforeend', this.element);
+    insert(insertAtBegin) {
+        this.renderElement.insertAdjacentElement(insertAtBegin ? 'afterbegin' : 'beforeend', this.element);
     }
 }
 class ChoreItem extends Component {
@@ -88,7 +88,7 @@ class ChoreItem extends Component {
         event.dataTransfer.effectAllowed = 'move';
     }
     dragEnd(_event) {
-        console.log('DragEnd');
+        console.log('--DRAGEVENT__ENDED--');
     }
     addListeners() {
         this.element.addEventListener('dragstart', this.dragStart.bind(this));
@@ -157,8 +157,8 @@ class ChoreList extends Component {
         }
     }
     renderChores() {
-        const listEl = document.getElementById(`${this.type}-chores-list`);
-        listEl.innerHTML = '';
+        const listElement = document.getElementById(`${this.type}-chores-list`);
+        listElement.innerHTML = '';
         for (const choreItem of this.assignedChores) {
             new ChoreItem(this.element.querySelector('ul').id, choreItem);
         }
@@ -186,17 +186,19 @@ class ChoreInput extends Component {
         const choreValidation = {
             value: enteredChore,
             required: true,
-            minLength: 5
+            minLength: 5,
+            maxLength: 50
         };
         const noteValidation = {
             value: enteredNote,
             required: true,
-            minLength: 5
+            minLength: 5,
+            maxLength: 50
         };
         if (!validateInputs(childValidation) ||
             !validateInputs(choreValidation) ||
             !validateInputs(noteValidation)) {
-            alert('INVALID INPUTS!!');
+            alert('INVALID INPUTS(min. 5 Characters, max. 50 Characters....)');
             return;
         }
         else {
@@ -204,7 +206,7 @@ class ChoreInput extends Component {
         }
     }
     renderContent() { }
-    clearInputs() {
+    clearFields() {
         this.childInputElement.value = '';
         this.choreInputElement.value = '';
         this.notesInputElement.value = '';
@@ -215,7 +217,7 @@ class ChoreInput extends Component {
         if (Array.isArray(userInput)) {
             const [child, chore, note] = userInput;
             choreState.addChore(child, chore, note);
-            this.clearInputs();
+            this.clearFields();
         }
     }
 }

@@ -115,7 +115,7 @@ function validateInputs(validateInput: ValidationLogic) {
 // ------- COMPONENT BASECLASS START --------------
 abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 	templateElement: HTMLTemplateElement;
-	hostElement: T;
+	renderElement: T;
 	element: U;
 
 	constructor(
@@ -127,7 +127,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 		this.templateElement = document.getElementById(
 			templateId
 		)! as HTMLTemplateElement;
-		this.hostElement = document.getElementById(hostElementId)! as T;
+		this.renderElement = document.getElementById(hostElementId)! as T;
 
 		const importedNode = document.importNode(
 			this.templateElement.content,
@@ -138,12 +138,12 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 			this.element.id = newElementId;
 		}
 
-		this.attach(insertAtStart);
+		this.insert(insertAtStart);
 	}
 
-	private attach(insertAtBeginning: boolean) {
-		this.hostElement.insertAdjacentElement(
-			insertAtBeginning ? 'afterbegin' : 'beforeend',
+	private insert(insertAtBegin: boolean) {
+		this.renderElement.insertAdjacentElement(
+			insertAtBegin ? 'afterbegin' : 'beforeend',
 			this.element
 		);
 	}
@@ -173,7 +173,7 @@ class ChoreItem extends Component<HTMLUListElement, HTMLLIElement>
 	}
 
 	public dragEnd(_event: DragEvent) {
-		console.log('DragEnd');
+		console.log('--DRAGEVENT__ENDED--');
 	}
 
 	public addListeners() {
@@ -258,10 +258,10 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement>
 	}
 
 	private renderChores() {
-		const listEl = document.getElementById(
+		const listElement = document.getElementById(
 			`${this.type}-chores-list`
 		)! as HTMLUListElement;
-		listEl.innerHTML = '';
+		listElement.innerHTML = '';
 		for (const choreItem of this.assignedChores) {
 			new ChoreItem(this.element.querySelector('ul')!.id, choreItem);
 		}
@@ -307,12 +307,14 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 		const choreValidation: ValidationLogic = {
 			value: enteredChore,
 			required: true,
-			minLength: 5
+			minLength: 5,
+			maxLength: 50
 		};
 		const noteValidation: ValidationLogic = {
 			value: enteredNote,
 			required: true,
-			minLength: 5
+			minLength: 5,
+			maxLength: 50
 		};
 
 		if (
@@ -320,7 +322,7 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 			!validateInputs(choreValidation) ||
 			!validateInputs(noteValidation)
 		) {
-			alert('INVALID INPUTS!!');
+			alert('INVALID INPUTS(min. 5 Characters, max. 50 Characters....)');
 			return;
 		} else {
 			return [enteredChild, enteredChore, enteredNote];
@@ -329,7 +331,7 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 
 	public renderContent() {}
 
-	private clearInputs() {
+	private clearFields() {
 		this.childInputElement.value = '';
 		this.choreInputElement.value = '';
 		this.notesInputElement.value = '';
@@ -341,7 +343,7 @@ class ChoreInput extends Component<HTMLDivElement, HTMLFormElement> {
 		if (Array.isArray(userInput)) {
 			const [child, chore, note] = userInput;
 			choreState.addChore(child, chore, note);
-			this.clearInputs();
+			this.clearFields();
 		}
 	}
 }

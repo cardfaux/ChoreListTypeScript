@@ -33,7 +33,7 @@ textarea {
 input:focus,
 textarea:focus {
   outline: none;
-  background: #fff5f9;
+
 }
 
 button {
@@ -79,6 +79,12 @@ button:active {
 
 #Finished-Chores li h2 {
   color: #ef476f;
+  text-decoration: line-through;
+}
+
+#Finished-Chores p {
+  color: #ccc;
+  border-bottom: 1px solid #1481ba;
 }
 
 #Finished-Chores .droppable {
@@ -90,7 +96,7 @@ button:active {
   margin: auto;
   padding: 1rem;
   border: 1px solid #2d232e;
-  background: #f7f7f7;
+  background: #f0efef;
 }
 
 .chores h2 {
@@ -128,4 +134,5 @@ button:active {
 
 .form-container {
   width: 25%;
+
 }
