@@ -1,3 +1,45 @@
+// ------- COMPONENT BASECLASS START --------------
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
+	templateElement: HTMLTemplateElement;
+	renderElement: T;
+	element: U;
+
+	constructor(
+		templateId: string,
+		renderElementId: string,
+		insertAtStart: boolean,
+		newElementId?: string
+	) {
+		this.templateElement = document.getElementById(
+			templateId
+		)! as HTMLTemplateElement;
+		this.renderElement = document.getElementById(renderElementId)! as T;
+
+		const importedNode = document.importNode(
+			this.templateElement.content,
+			true
+		);
+		this.element = importedNode.firstElementChild as U;
+		if (newElementId) {
+			this.element.id = newElementId;
+		}
+
+		this.insert(insertAtStart);
+	}
+
+	private insert(insertAtBegin: boolean) {
+		this.renderElement.insertAdjacentElement(
+			insertAtBegin ? 'afterbegin' : 'beforeend',
+			this.element
+		);
+	}
+
+	abstract addListeners(): void;
+	abstract renderContent(): void;
+}
+
+// ------- COMPONENT BASECLASS END --------------
+
 // ---------VALIDATION FOR THE INPUTS START -------------
 interface ValidationLogic {
 	value: string;
@@ -55,7 +97,7 @@ class Chore {
 
 // ---- BASE CLASS FOR A CHORE END --------
 
-// ------ THE BASE CLASS FOR THE CHORES START ----------
+// ------ THE BASE CLASS FOR THE STATE START ----------
 
 type ListenerFunction<T> = (items: T[]) => void;
 
@@ -67,7 +109,7 @@ class State<T> {
 	}
 }
 
-// ------ THE BASE CLASS FOR THE CHORES END ----------
+// ------ THE BASE CLASS FOR THE STATE END ----------
 
 // --------- THE CHORESTATE CLASS EXTENDING STATE CLASS START -------
 
@@ -115,48 +157,6 @@ class ChoreState extends State<Chore> {
 const choreState = ChoreState.getInstance();
 
 // --------- THE CHORESTATE CLASS EXTENDING STATE CLASS END -------
-
-// ------- COMPONENT BASECLASS START --------------
-abstract class Component<T extends HTMLElement, U extends HTMLElement> {
-	templateElement: HTMLTemplateElement;
-	renderElement: T;
-	element: U;
-
-	constructor(
-		templateId: string,
-		hostElementId: string,
-		insertAtStart: boolean,
-		newElementId?: string
-	) {
-		this.templateElement = document.getElementById(
-			templateId
-		)! as HTMLTemplateElement;
-		this.renderElement = document.getElementById(hostElementId)! as T;
-
-		const importedNode = document.importNode(
-			this.templateElement.content,
-			true
-		);
-		this.element = importedNode.firstElementChild as U;
-		if (newElementId) {
-			this.element.id = newElementId;
-		}
-
-		this.insert(insertAtStart);
-	}
-
-	private insert(insertAtBegin: boolean) {
-		this.renderElement.insertAdjacentElement(
-			insertAtBegin ? 'afterbegin' : 'beforeend',
-			this.element
-		);
-	}
-
-	abstract addListeners(): void;
-	abstract renderContent(): void;
-}
-
-// ------- COMPONENT BASECLASS END --------------
 
 // -------------- CHOREITEM CLASS EXTENDING FROM THE COMPONENT CLASS START ---------
 class ChoreItem extends Component<HTMLUListElement, HTMLLIElement>
@@ -209,8 +209,8 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement>
 	public dragOver(event: DragEvent) {
 		if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
 			event.preventDefault();
-			const listEl = this.element.querySelector('ul')!;
-			listEl.classList.add('droppable');
+			const listElement = this.element.querySelector('ul')!;
+			listElement.classList.add('droppable');
 		}
 	}
 
@@ -220,8 +220,8 @@ class ChoreList extends Component<HTMLDivElement, HTMLElement>
 	}
 
 	public dragLeave(_event: DragEvent) {
-		const listEl = this.element.querySelector('ul')!;
-		listEl.classList.remove('droppable');
+		const listElement = this.element.querySelector('ul')!;
+		listElement.classList.remove('droppable');
 	}
 
 	public addListeners() {

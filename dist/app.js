@@ -1,4 +1,19 @@
 "use strict";
+class Component {
+    constructor(templateId, renderElementId, insertAtStart, newElementId) {
+        this.templateElement = document.getElementById(templateId);
+        this.renderElement = document.getElementById(renderElementId);
+        const importedNode = document.importNode(this.templateElement.content, true);
+        this.element = importedNode.firstElementChild;
+        if (newElementId) {
+            this.element.id = newElementId;
+        }
+        this.insert(insertAtStart);
+    }
+    insert(insertAtBegin) {
+        this.renderElement.insertAdjacentElement(insertAtBegin ? 'afterbegin' : 'beforeend', this.element);
+    }
+}
 function validateInputs(validateInput) {
     let isValid = true;
     if (validateInput.required) {
@@ -61,21 +76,6 @@ class ChoreState extends State {
     }
 }
 const choreState = ChoreState.getInstance();
-class Component {
-    constructor(templateId, hostElementId, insertAtStart, newElementId) {
-        this.templateElement = document.getElementById(templateId);
-        this.renderElement = document.getElementById(hostElementId);
-        const importedNode = document.importNode(this.templateElement.content, true);
-        this.element = importedNode.firstElementChild;
-        if (newElementId) {
-            this.element.id = newElementId;
-        }
-        this.insert(insertAtStart);
-    }
-    insert(insertAtBegin) {
-        this.renderElement.insertAdjacentElement(insertAtBegin ? 'afterbegin' : 'beforeend', this.element);
-    }
-}
 class ChoreItem extends Component {
     constructor(hostId, chore) {
         super('single-chore', hostId, false, chore.id);
@@ -110,8 +110,8 @@ class ChoreList extends Component {
     dragOver(event) {
         if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
             event.preventDefault();
-            const listEl = this.element.querySelector('ul');
-            listEl.classList.add('droppable');
+            const listElement = this.element.querySelector('ul');
+            listElement.classList.add('droppable');
         }
     }
     dropChore(event) {
@@ -119,8 +119,8 @@ class ChoreList extends Component {
         choreState.moveChore(choreId, 'Finished');
     }
     dragLeave(_event) {
-        const listEl = this.element.querySelector('ul');
-        listEl.classList.remove('droppable');
+        const listElement = this.element.querySelector('ul');
+        listElement.classList.remove('droppable');
     }
     addListeners() {
         this.element.addEventListener('dragover', this.dragOver.bind(this));
